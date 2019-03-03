@@ -49,6 +49,8 @@
     <link href="{{ if .OutputFormats.Get "json" }}{{ .Site.BaseURL }}feed.json{{ end }}" rel="alternate" type="application/json" title="{{ .Site.Title }}" />
 {{ end }}
 
+{{ partial "countly.html" . }}
+
 <!-- Custom head tags -->
 {{- if templates.Exists "partials/extra-head.html" -}}
     {{ partial "extra-head.html" . }}
