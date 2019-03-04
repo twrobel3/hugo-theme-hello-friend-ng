@@ -38,43 +38,52 @@ function initializeConsent() {
       //checking if user already provided consent
       if(consents && consents !== "[]"){
           //we already have array with consents from previous visit, let's just pass them to Countly
-          if (document.getElementById("gdpr-is-opted-in")) {
-            document.getElementById("gdpr-is-opted-in").style.display = 'block';
-            document.getElementById("gdpr-is-opted-out").style.display = 'none';
-          }
+          toggleConsentDisplay(true);
           Countly.q.push(['add_consent', JSON.parse(consents)]);
       }
       else if (!refuseUntil || refuseUntil < Date.now()){
           // User has not consented, or the refuse duration has been exceeded
-          document.getElementById("gdpr-consent").style.display = 'block';
-          if (document.getElementById("gdpr-is-opted-in")) {
-            document.getElementById("gdpr-is-opted-in").style.display = 'none';
-            document.getElementById("gdpr-is-opted-out").style.display = 'block';
-          }
+          toggleConsentDisplay(null);
       } else {
-        if (document.getElementById("gdpr-is-opted-in")) {
-          document.getElementById("gdpr-is-opted-in").style.display = 'none';
-          document.getElementById("gdpr-is-opted-out").style.display = 'block';
-        }
+        toggleConsentDisplay(false);
       }
   } else {
       // Sorry! No Web Storage support..
       // we can fallback to cookie
   }
 }
-//user can then change his mind and opt out or opt back in
-//so let's provide these function to UI
+
+function setDisplayIfPresent(id, display) {
+  if (document.getElementById(id) !== null) {
+    document.getElementById(id).style.display = display
+  }
+}
+
+function toggleConsentDisplay(isOptedIn) {
+  if (isOptedIn === true) {
+    setDisplayIfPresent("gdpr-consent", "none");
+    setDisplayIfPresent("gdpr-is-opted-in", "block");
+    setDisplayIfPresent("gdpr-is-opted-out", "none");
+  } else {
+    if (isOptedIn === false) {
+      setDisplayIfPresent("gdpr-consent", "none");
+    } else {
+      // Case where user hasn't decided yet, or decided more than 24 hours ago, and banner suppression interval is
+      // passed, so we should display the GDPR banner notice
+      setDisplayIfPresent("gdpr-consent", "block");
+    }
+    setDisplayIfPresent("gdpr-is-opted-in", "none");
+    setDisplayIfPresent("gdpr-is-opted-out", "block");
+  }
+}
+
 function giveConsent(){
     //give consent to same 3 features
     var response = ["activity", "interaction", "crashes"];
     Countly.q.push(['add_consent', response]);
     localStorage.setItem("consents", JSON.stringify(response));
     localStorage.setItem("refuseUntil", Date.now())
-    document.getElementById("gdpr-consent").style.display = 'none';
-    if (document.getElementById("gdpr-is-opted-in")) {
-      document.getElementById("gdpr-is-opted-in").style.display = 'block';
-      document.getElementById("gdpr-is-opted-out").style.display = 'none';
-    }
+    toggleConsentDisplay(true);
 }
 function removeConsent(refuseDuration){
     //remove consent from same 3 features
@@ -82,10 +91,6 @@ function removeConsent(refuseDuration){
     Countly.q.push(['remove_consent', response]);
     localStorage.setItem("consents", JSON.stringify([]));
     localStorage.setItem("refuseUntil", Date.now() + refuseDuration * 1000)
-    document.getElementById("gdpr-consent").style.display = 'none';
-    if (document.getElementById("gdpr-is-opted-in")) {
-      document.getElementById("gdpr-is-opted-in").style.display = 'none';
-      document.getElementById("gdpr-is-opted-out").style.display = 'block';
-    }
+    toggleConsentDisplay(false);
 }
 </script>
