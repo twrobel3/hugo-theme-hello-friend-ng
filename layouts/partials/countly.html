@@ -1,64 +1,62 @@
 <script type='text/javascript'>
-//some default pre init
+// Countly pre-initialization
 var Countly = Countly || {};
 Countly.q = Countly.q || [];
 
-//provide countly initialization parameters
+// Countly initialization parameters
 Countly.app_key = '47171f6404ee30299e994b23a060ffde89b0c3d3';
 Countly.url = 'https://stats.wrobel.dev';
 Countly.require_consent = true;
 
 Countly.q.push(['group_features', {
-    activity:["sessions","views"],
-    interaction:["scrolls","clicks"]
+    activity:["sessions","views"]
 }]);
-
 Countly.q.push(['track_sessions']);
 Countly.q.push(['track_pageview']);
-Countly.q.push(['track_clicks']);
-Countly.q.push(['track_scrolls']);
 Countly.q.push(['track_errors']);
 
-//load countly script asynchronously
+// Initialize the countly script asynchronously on page load
 (function() {
    var cly = document.createElement('script'); cly.type = 'text/javascript';
    cly.async = true;
-   //enter url of script here
    cly.src = 'https://stats.wrobel.dev/sdk/web/countly.min.js';
    cly.onload = function(){Countly.init()};
    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(cly, s);
 })();
 
+// initializeConsent checks state for previously applied consents, restores consents if present, and toggles
+// consent-related UI component visibility
 function initializeConsent() {
-  //Consent Management logic should be implemented and controled by developer
-  //this is just a simply example of what logic it could have
   if (typeof(localStorage) !== "undefined") {
       var consents = localStorage.getItem("consents");
       var refuseUntil = localStorage.getItem("refuseUntil");
-      //checking if user already provided consent
+      // Checking if user already provided consent
       if(consents && consents !== "[]"){
-          //we already have array with consents from previous visit, let's just pass them to Countly
-          toggleConsentDisplay(true);
-          Countly.q.push(['add_consent', JSON.parse(consents)]);
+        // We already have array with consents from previous visit, let's just pass them to Countly
+        toggleConsentDisplay(true);
+        Countly.q.push(['add_consent', JSON.parse(consents)]);
       }
       else if (!refuseUntil || refuseUntil < Date.now()){
-          // User has not consented, or the refuse duration has been exceeded
-          toggleConsentDisplay(null);
+        // User has not consented, or the refusal duration has been exceeded
+        toggleConsentDisplay(null);
       } else {
         toggleConsentDisplay(false);
       }
-  } else {
-      // Sorry! No Web Storage support..
-      // we can fallback to cookie
   }
 }
 
+// setDisplayIfPresent is a helper function to update the display attribute on an element, if it is present in the DOM
 function setDisplayIfPresent(id, display) {
   if (document.getElementById(id) !== null) {
     document.getElementById(id).style.display = display
   }
 }
 
+// toggleConsentDisplay shows or hides the consent-related UI components, based on whether the user is opted in or not
+// Possible states for isOptedIn are:
+//  - true: User has explicilty granted consent
+//  - false: User has explicitly opted out of data collecting;  Do not show the banner notice
+//  - null: User has neither opted in or out;  Show consent info on both the privacy page and display the banner notice
 function toggleConsentDisplay(isOptedIn) {
   if (isOptedIn === true) {
     setDisplayIfPresent("gdpr-consent", "none");
@@ -77,20 +75,23 @@ function toggleConsentDisplay(isOptedIn) {
   }
 }
 
+// giveConsent adds the consents with Countly
 function giveConsent(){
-    //give consent to same 3 features
-    var response = ["activity", "interaction", "crashes"];
+    var response = ["activity", "crashes"];
     Countly.q.push(['add_consent', response]);
     localStorage.setItem("consents", JSON.stringify(response));
     localStorage.setItem("refuseUntil", Date.now())
     toggleConsentDisplay(true);
 }
+
+// giveConsent removes the consents with Countly and updates the local storage.  Duration to refuse consent for is
+// passed in as a parameter
 function removeConsent(refuseDuration){
-    //remove consent from same 3 features
-    var response = ["activity", "interaction", "crashes"];
+    var response = ["activity", "crashes"];
     Countly.q.push(['remove_consent', response]);
     localStorage.setItem("consents", JSON.stringify([]));
     localStorage.setItem("refuseUntil", Date.now() + refuseDuration * 1000)
     toggleConsentDisplay(false);
 }
+
 </script>
